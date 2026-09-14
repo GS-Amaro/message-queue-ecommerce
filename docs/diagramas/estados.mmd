@@ -1,0 +1,9 @@
+stateDiagram-v2
+    [*] --> CRIADO
+    CRIADO --> PAGO: pagamento.aprovado
+    CRIADO --> RECUSADO: pagamento.recusado
+    PAGO --> CONCLUIDO: estoque.reservado
+    PAGO --> SEM_ESTOQUE: estoque.insuficiente
+    CONCLUIDO --> [*]
+    RECUSADO --> [*]
+    SEM_ESTOQUE --> [*]

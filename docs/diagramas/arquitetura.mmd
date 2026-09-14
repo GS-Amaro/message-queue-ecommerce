@@ -1,0 +1,30 @@
+flowchart TB
+    CLI([Cliente]) -->|POST /pedidos| API[api]
+    API -->|publica pedido.criado| EX{{"exchange: pedidos — tipo topic"}}
+
+    EX -->|pedido.criado| QP[[fila: pagamento]]
+    EX -->|pagamento.aprovado| QE[[fila: estoque]]
+    EX -->|"#  (todos os eventos)"| QN[[fila: notificacao]]
+
+    subgraph W["processo worker — escalavel para N replicas"]
+        direction LR
+        HP[handler<br/>pagamento]
+        HE[handler<br/>estoque]
+        HN[handler<br/>notificacao]
+    end
+
+    QP --> HP
+    QE --> HE
+    QN --> HN
+
+    HP -.->|"publica pagamento.aprovado<br/>ou pagamento.recusado"| EX
+    HE -.->|"publica estoque.reservado<br/>ou estoque.insuficiente"| EX
+
+    API --> PG[(PostgreSQL)]
+    HE --> PG
+    HN --> PG
+
+    classDef ex fill:#e8e8f5,stroke:#555
+    classDef q fill:#f5f0e0,stroke:#555
+    class EX ex
+    class QP,QE,QN q

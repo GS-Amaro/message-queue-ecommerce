@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant C as Cliente
+    participant A as api
+    participant X as exchange pedidos
+    participant P as handler pagamento
+    participant E as handler estoque
+    participant N as handler notificacao
+    participant DB as PostgreSQL
+
+    C->>A: POST /pedidos
+    A->>DB: INSERT pedido (status CRIADO)
+    A->>X: publish pedido.criado
+    X-->>A: publisher confirm
+    A-->>C: 201 Created (~150 ms)
+
+    X->>P: pedido.criado
+    X->>N: pedido.criado
+    P->>P: cobra no gateway (simulado)
+    P->>X: publish pagamento.aprovado
+    P->>X: ack
+
+    X->>E: pagamento.aprovado
+    X->>N: pagamento.aprovado
+    E->>DB: UPDATE produtos (atômico)
+    E->>X: publish estoque.reservado
+    E->>X: ack
+
+    X->>N: estoque.reservado
+    N->>DB: UPDATE pedido (status CONCLUIDO)
+    N->>X: ack
